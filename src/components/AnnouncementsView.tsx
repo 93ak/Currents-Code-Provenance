@@ -4,9 +4,10 @@ import { Megaphone, Pin, Calendar, UserCheck } from 'lucide-react';
 
 interface AnnouncementsViewProps {
   announcements: Announcement[];
+  darkMode?: boolean;
 }
 
-export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({ announcements }) => {
+export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({ announcements, darkMode = false }) => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
       {/* Header */}

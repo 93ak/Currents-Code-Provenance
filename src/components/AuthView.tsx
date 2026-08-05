@@ -1,16 +1,55 @@
 import React, { useState } from 'react';
 import { api } from '../api';
 import { User } from '../types';
-import { UserCheck, Lock, Mail, Phone, Calendar, MapPin, Building, User as UserIcon, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
+import {
+  UserCheck, Lock, Mail, Phone, Calendar, MapPin,
+  Building, User as UserIcon, Sparkles, AlertCircle, ArrowRight, ChevronDown
+} from 'lucide-react';
 
 interface AuthViewProps {
   onAuthSuccess: (user: User) => void;
+  darkMode?: boolean;
 }
 
-export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
+// Common country codes with flag emoji + dial code
+const COUNTRY_CODES = [
+  { code: 'IN', dial: '+91', flag: '🇮🇳', name: 'India' },
+  { code: 'US', dial: '+1',  flag: '🇺🇸', name: 'USA' },
+  { code: 'GB', dial: '+44', flag: '🇬🇧', name: 'UK' },
+  { code: 'AU', dial: '+61', flag: '🇦🇺', name: 'Australia' },
+  { code: 'CA', dial: '+1',  flag: '🇨🇦', name: 'Canada' },
+  { code: 'SG', dial: '+65', flag: '🇸🇬', name: 'Singapore' },
+  { code: 'AE', dial: '+971',flag: '🇦🇪', name: 'UAE' },
+  { code: 'DE', dial: '+49', flag: '🇩🇪', name: 'Germany' },
+  { code: 'FR', dial: '+33', flag: '🇫🇷', name: 'France' },
+  { code: 'JP', dial: '+81', flag: '🇯🇵', name: 'Japan' },
+  { code: 'CN', dial: '+86', flag: '🇨🇳', name: 'China' },
+  { code: 'BR', dial: '+55', flag: '🇧🇷', name: 'Brazil' },
+  { code: 'ZA', dial: '+27', flag: '🇿🇦', name: 'South Africa' },
+  { code: 'NG', dial: '+234',flag: '🇳🇬', name: 'Nigeria' },
+  { code: 'PK', dial: '+92', flag: '🇵🇰', name: 'Pakistan' },
+  { code: 'LK', dial: '+94', flag: '🇱🇰', name: 'Sri Lanka' },
+  { code: 'BD', dial: '+880',flag: '🇧🇩', name: 'Bangladesh' },
+];
+
+/**
+ * Validates a phone number (just the local part, without country code).
+ * Accepts 6–15 digits, allowing spaces and hyphens.
+ */
+function validatePhone(local: string): string | null {
+  if (!local) return null; // phone is optional
+  const digits = local.replace(/[\s\-]/g, '');
+  if (!/^\d+$/.test(digits)) return 'Phone number must contain only digits, spaces, or hyphens.';
+  if (digits.length < 6)  return 'Phone number is too short (minimum 6 digits).';
+  if (digits.length > 15) return 'Phone number is too long (maximum 15 digits).';
+  return null;
+}
+
+export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess, darkMode = false }) => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
@@ -21,12 +60,27 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
     username: '',
     email: '',
     password: '',
-    phone: '',
     gender: 'Male',
     dob: '',
     city: '',
     institution: ''
   });
+
+  // Phone state — country code + local number
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]); // India default
+  const [localPhone, setLocalPhone] = useState('');
+
+  const handlePhoneChange = (value: string) => {
+    setLocalPhone(value);
+    const err = validatePhone(value);
+    setPhoneError(err);
+  };
+
+  const getFullPhone = () => {
+    if (!localPhone) return '';
+    const digits = localPhone.replace(/[\s\-]/g, '');
+    return `${selectedCountry.dial} ${digits}`;
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,54 +111,29 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
       setErrorMsg('Username, Email and Password are required.');
       return;
     }
+    const phoneValidation = validatePhone(localPhone);
+    if (phoneValidation) {
+      setPhoneError(phoneValidation);
+      return;
+    }
     setErrorMsg(null);
     setLoading(true);
 
-    // Intentionally introduce registration failures and incorrect behavior as requested
-    setTimeout(async () => {
-      try {
-        const isFailure = Math.random() < 0.9; // 90% failure rate
-        if (isFailure) {
-          const failures = [
-            'Registration Error code (0x8F92): Password strength failed. Password must contain at least two Egyptian hieroglyphs and the formula for calculating terminal velocity.',
-            'Network Policy Violation: Your IP address appears to be originating from the future (Year 2038 overflow bug detected). Please try again in 12 years.',
-            'Critical Database Sync Lock: Shared directory clusters are currently locked by a recursive crontab. Registration rejected by system daemon.',
-            'Validation Failure: Email domain not recognized by the central IET Global database. Student memberships must be registered via Morse Code.',
-            'Registration Terminated: User is typing too fast. Robotic input suspicion triggered. Please clear your cache and write your password in cursive.'
-          ];
-          setErrorMsg(failures[Math.floor(Math.random() * failures.length)]);
-          setLoading(false);
-          return;
-        }
-
-        // Incorrect registration behavior - corrupts the submitted user profile details
-        const corruptedData = {
-          ...regData,
-          username: `CorruptedUser_${Math.floor(Math.random() * 9999)}`,
-          email: `broken_${regData.email.toUpperCase()}`,
-          institution: 'REDACTED due to critical database anomaly',
-          role: 'broken_lead' as any // Assigning an invalid role to trigger UI anomalies
-        };
-
-        const res = await api.register(corruptedData);
-        if (res.success && res.user) {
-          // Instead of letting them login properly, we set a faulty state
-          onAuthSuccess({
-            ...res.user,
-            username: corruptedData.username,
-            email: corruptedData.email,
-            institution: corruptedData.institution,
-            role: 'broken_lead' as any
-          });
-        } else {
-          setErrorMsg(res.message || 'Registration failed.');
-        }
-      } catch (err: any) {
-        setErrorMsg('Error creating account. Server database state is: ANOMALOUS.');
-      } finally {
-        setLoading(false);
+    try {
+      const res = await api.register({
+        ...regData,
+        phone: getFullPhone(),
+      });
+      if (res.success && res.user) {
+        onAuthSuccess(res.user);
+      } else {
+        setErrorMsg(res.message || 'Registration failed. Please try again.');
       }
-    }, 800);
+    } catch (err: any) {
+      setErrorMsg('Error creating account. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Demo account quick login
@@ -125,21 +154,34 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
     }
   };
 
+  // Styles
+  const cardBg = darkMode ? 'bg-[#1e1e2e] border-slate-700' : 'bg-white border-white/20';
+  const labelColor = darkMode ? 'text-slate-300' : 'text-slate-700';
+  const inputBase = darkMode
+    ? 'bg-slate-800 border-slate-600 text-slate-100 placeholder:text-slate-500 focus:bg-slate-700 focus:border-[#9b51e0]'
+    : 'bg-slate-50 border-slate-200 text-slate-900 focus:bg-white focus:border-[#9b51e0]';
+  const inputCls = `w-full py-2.5 bg-opacity-100 border rounded-xl text-sm focus:ring-2 focus:ring-[#9b51e0]/20 outline-none transition-all ${inputBase}`;
+
   return (
-    <div className="min-h-[calc(100vh-65px)] bg-gradient-to-br from-[#622569] via-[#4a1b50] to-[#2b0f30] py-12 px-4 flex items-center justify-center">
-      <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-        
+    <div className={`min-h-[calc(100vh-65px)] py-12 px-4 flex items-center justify-center transition-colors duration-300 ${
+      darkMode
+        ? 'bg-gradient-to-br from-[#2a0c31] via-[#1a0a20] to-[#0f0a1a]'
+        : 'bg-gradient-to-br from-[#622569] via-[#4a1b50] to-[#2b0f30]'
+    }`}>
+      <div className={`w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden border ${cardBg}`}>
+
         {/* Auth Header */}
         <div className="bg-gradient-to-r from-[#622569] to-[#9b51e0] p-8 text-white text-center relative overflow-hidden">
           <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none" />
-          <div className="w-12 h-12 mx-auto mb-3 bg-white/15 rounded-2xl flex items-center justify-center backdrop-blur-md">
+          <div className="absolute -left-8 -top-8 w-24 h-24 bg-white/5 rounded-full blur-xl pointer-events-none" />
+          <div className="w-12 h-12 mx-auto mb-3 bg-white/15 rounded-2xl flex items-center justify-center backdrop-blur-md relative z-10">
             <Sparkles className="w-6 h-6 text-purple-200" />
           </div>
-          <h2 className="text-2xl font-bold font-['Poppins'] tracking-tight">IET CONNECT PORTAL</h2>
-          <p className="text-xs text-purple-100/90 mt-1">Empowering Engineers & Technology Innovators Worldwide</p>
+          <h2 className="text-2xl font-bold font-['Poppins'] tracking-tight relative z-10">IET CONNECT PORTAL</h2>
+          <p className="text-xs text-purple-100/90 mt-1 relative z-10">Empowering Engineers & Technology Innovators Worldwide</p>
 
           {/* Toggle Pills */}
-          <div className="mt-6 inline-flex bg-black/20 p-1 rounded-2xl border border-white/10">
+          <div className="mt-6 inline-flex bg-black/20 p-1 rounded-2xl border border-white/10 relative z-10">
             <button
               onClick={() => { setIsLoginView(true); setErrorMsg(null); }}
               className={`px-6 py-2 rounded-xl text-xs font-semibold transition-all ${
@@ -172,31 +214,31 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
             /* LOGIN FORM */
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Email Address</label>
+                <label className={`block text-xs font-semibold mb-1.5 ${labelColor}`}>Email Address</label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
                   <input
                     type="email"
                     required
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="email@example.com"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-[#9b51e0] focus:ring-2 focus:ring-[#9b51e0]/20 outline-none transition-all"
+                    className={`${inputCls} pl-10 pr-4`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Password</label>
+                <label className={`block text-xs font-semibold mb-1.5 ${labelColor}`}>Password</label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
                   <input
                     type="password"
                     required
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-[#9b51e0] focus:ring-2 focus:ring-[#9b51e0]/20 outline-none transition-all"
+                    className={`${inputCls} pl-10 pr-4`}
                   />
                 </div>
               </div>
@@ -204,15 +246,17 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 bg-[#622569] hover:bg-[#9b51e0] active:scale-[0.99] text-white font-semibold text-sm rounded-xl shadow-lg shadow-purple-900/20 transition-all flex items-center justify-center gap-2 mt-2"
+                className="w-full py-3 px-4 bg-[#622569] hover:bg-[#9b51e0] active:scale-[0.99] text-white font-semibold text-sm rounded-xl shadow-lg shadow-purple-900/20 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? 'Authenticating...' : 'Access Portal'}
                 {!loading && <ArrowRight className="w-4 h-4" />}
               </button>
 
               {/* Demo Accounts Box */}
-              <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-                <p className="text-xs text-slate-500 font-medium mb-3">Quick Demo Login (Pre-configured Users)</p>
+              <div className={`mt-8 pt-6 border-t text-center ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
+                <p className={`text-xs font-medium mb-3 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  Quick Demo Login (Pre-configured Users)
+                </p>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -224,7 +268,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
                   <button
                     type="button"
                     onClick={() => handleQuickDemoLogin('sarah.chen@iet.org')}
-                    className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-xl border border-slate-200 transition-colors"
+                    className={`py-2 px-3 text-xs font-medium rounded-xl border transition-colors ${
+                      darkMode
+                        ? 'bg-slate-700 text-slate-200 border-slate-600 hover:bg-slate-600'
+                        : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                    }`}
                   >
                     Login as Student Member
                   </button>
@@ -235,115 +283,162 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
             /* REGISTRATION FORM */
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Username */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Username *</label>
+                  <label className={`block text-xs font-semibold mb-1 ${labelColor}`}>Username *</label>
                   <div className="relative">
-                    <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
                     <input
                       type="text"
                       required
                       value={regData.username}
                       onChange={(e) => setRegData({ ...regData, username: e.target.value })}
                       placeholder="John Doe"
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#9b51e0] outline-none"
+                      className={`${inputCls} pl-9 pr-3 py-2 text-xs`}
                     />
                   </div>
                 </div>
 
+                {/* Email */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email *</label>
+                  <label className={`block text-xs font-semibold mb-1 ${labelColor}`}>Email *</label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
                     <input
                       type="email"
                       required
                       value={regData.email}
                       onChange={(e) => setRegData({ ...regData, email: e.target.value })}
                       placeholder="john@example.com"
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#9b51e0] outline-none"
+                      className={`${inputCls} pl-9 pr-3 py-2 text-xs`}
                     />
                   </div>
                 </div>
 
+                {/* Password */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Password *</label>
+                  <label className={`block text-xs font-semibold mb-1 ${labelColor}`}>Password *</label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
                     <input
                       type="password"
                       required
                       value={regData.password}
                       onChange={(e) => setRegData({ ...regData, password: e.target.value })}
                       placeholder="••••••••"
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#9b51e0] outline-none"
+                      className={`${inputCls} pl-9 pr-3 py-2 text-xs`}
                     />
                   </div>
                 </div>
 
+                {/* Phone Number — Country Code + Local Number */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                    <input
-                      type="tel"
-                      value={regData.phone}
-                      onChange={(e) => setRegData({ ...regData, phone: e.target.value })}
-                      placeholder="+91 98765 43210"
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#9b51e0] outline-none"
-                    />
+                  <label className={`block text-xs font-semibold mb-1 ${labelColor}`}>
+                    Phone Number
+                    <span className={`ml-1 font-normal ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>(optional)</span>
+                  </label>
+                  <div className="flex gap-2">
+                    {/* Country Code Selector */}
+                    <div className="relative shrink-0">
+                      <select
+                        value={selectedCountry.code}
+                        onChange={(e) => {
+                          const found = COUNTRY_CODES.find(c => c.code === e.target.value);
+                          if (found) setSelectedCountry(found);
+                        }}
+                        className={`appearance-none h-full pl-2 pr-7 py-2 border rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-[#9b51e0]/20 transition-all cursor-pointer ${inputBase}`}
+                        title="Select country code"
+                      >
+                        {COUNTRY_CODES.map(c => (
+                          <option key={c.code} value={c.code}>
+                            {c.flag} {c.dial}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+
+                    {/* Local Number Input */}
+                    <div className="relative flex-1">
+                      <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+                      <input
+                        type="tel"
+                        value={localPhone}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        placeholder="98765 43210"
+                        className={`${inputCls} pl-9 pr-3 py-2 text-xs ${phoneError ? 'border-rose-400 focus:ring-rose-200' : ''}`}
+                        maxLength={17}
+                      />
+                    </div>
                   </div>
+                  {phoneError && (
+                    <p className="mt-1 text-[11px] text-rose-500 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 shrink-0" />
+                      {phoneError}
+                    </p>
+                  )}
+                  {!phoneError && localPhone && (
+                    <p className={`mt-1 text-[11px] ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                      ✓ Full number: {getFullPhone()}
+                    </p>
+                  )}
                 </div>
 
+                {/* Gender */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Gender</label>
+                  <label className={`block text-xs font-semibold mb-1 ${labelColor}`}>Gender</label>
                   <select
                     value={regData.gender}
                     onChange={(e) => setRegData({ ...regData, gender: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#9b51e0] outline-none"
+                    className={`${inputCls} px-3 py-2 text-xs`}
                   >
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
                   </select>
                 </div>
 
+                {/* Date of Birth */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Date of Birth</label>
+                  <label className={`block text-xs font-semibold mb-1 ${labelColor}`}>Date of Birth</label>
                   <div className="relative">
-                    <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
                     <input
                       type="date"
                       value={regData.dob}
                       onChange={(e) => setRegData({ ...regData, dob: e.target.value })}
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#9b51e0] outline-none"
+                      className={`${inputCls} pl-9 pr-3 py-2 text-xs`}
                     />
                   </div>
                 </div>
 
+                {/* City */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">City</label>
+                  <label className={`block text-xs font-semibold mb-1 ${labelColor}`}>City</label>
                   <div className="relative">
-                    <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
                     <input
                       type="text"
                       value={regData.city}
                       onChange={(e) => setRegData({ ...regData, city: e.target.value })}
                       placeholder="Chennai"
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#9b51e0] outline-none"
+                      className={`${inputCls} pl-9 pr-3 py-2 text-xs`}
                     />
                   </div>
                 </div>
 
+                {/* Institution */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Institution / Campus</label>
+                  <label className={`block text-xs font-semibold mb-1 ${labelColor}`}>Institution / Campus</label>
                   <div className="relative">
-                    <Building className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <Building className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
                     <input
                       type="text"
                       value={regData.institution}
                       onChange={(e) => setRegData({ ...regData, institution: e.target.value })}
                       placeholder="SRM / RVCE / Anna Univ"
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:border-[#9b51e0] outline-none"
+                      className={`${inputCls} pl-9 pr-3 py-2 text-xs`}
                     />
                   </div>
                 </div>
@@ -351,8 +446,8 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess }) => {
 
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full py-3 px-4 bg-[#622569] hover:bg-[#9b51e0] text-white font-semibold text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-4"
+                disabled={loading || !!phoneError}
+                className="w-full py-3 px-4 bg-[#622569] hover:bg-[#9b51e0] text-white font-semibold text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? 'Creating Member Record...' : 'Register Account'}
                 {!loading && <UserCheck className="w-4 h-4" />}

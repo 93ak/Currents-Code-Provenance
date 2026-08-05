@@ -8,6 +8,7 @@ interface EventsViewProps {
   onRegisterEvent: (eventId: string) => void;
   onCreateEvent: (eventData: Partial<Event>) => Promise<boolean>;
   searchQuery: string;
+  darkMode?: boolean;
 }
 
 export const EventsView: React.FC<EventsViewProps> = ({
@@ -16,6 +17,7 @@ export const EventsView: React.FC<EventsViewProps> = ({
   onRegisterEvent,
   onCreateEvent,
   searchQuery,
+  darkMode = false,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedTimeline, setSelectedTimeline] = useState<'all' | 'future' | 'present' | 'past'>('all');
@@ -80,13 +82,19 @@ export const EventsView: React.FC<EventsViewProps> = ({
     }
   };
 
+  const card = darkMode ? 'bg-[#1e1e2e] border-slate-700 text-slate-100' : 'bg-white border-slate-200/80 text-slate-900';
+  const inputCls = darkMode
+    ? 'bg-slate-800 border-slate-600 text-slate-100 placeholder:text-slate-500 focus:border-[#9b51e0]'
+    : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-[#9b51e0]';
+  const labelCls = darkMode ? 'text-slate-300' : 'text-slate-700';
+
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border shadow-sm ${card}`}>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 font-['Poppins']">Chapter Events & Workshops</h1>
-          <p className="text-xs text-slate-500 mt-1">Participate in technical symposiums, hackathons, and webinars</p>
+          <h1 className={`text-2xl font-bold font-['Poppins'] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>Chapter Events & Workshops</h1>
+          <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Participate in technical symposiums, hackathons, and webinars</p>
         </div>
 
         {user && (
@@ -303,130 +311,116 @@ export const EventsView: React.FC<EventsViewProps> = ({
       {/* CREATE EVENT MODAL */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-orange-100 rounded-none max-w-lg w-full p-2 space-y-0 relative shadow-2xl border-4 border-amber-600 max-h-[90vh] overflow-x-hidden">
+          <div className={`rounded-3xl max-w-lg w-full p-6 space-y-4 relative shadow-2xl border max-h-[90vh] overflow-y-auto ${card}`}>
             <button
-              onClick={() => {
-                setShowCreateModal(false);
-                alert('Event Host Aborted. Temporary form registers cleared (Warning: may leave local browser memory leaking).');
-              }}
-              className="absolute top-2 right-2 p-2 text-white bg-amber-600 rounded-none font-bold text-xs"
+              onClick={() => setShowCreateModal(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-full"
             >
-              [X] ABORT HOSTER
+              <X className="w-4 h-4" />
             </button>
 
-            <h2 className="text-sm font-black text-amber-900 uppercase tracking-widest font-mono">
-              [SYSTEM DICTATION] Publish Chapter Event
+            <h2 className={`text-lg font-bold font-['Poppins'] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+              Host a Chapter Event
             </h2>
-            <p className="text-[10px] text-amber-700 font-mono -mt-1 pb-2">
-              Error 303: Forms do not scale for viewport sizes. Overflow elements are clipped.
-            </p>
 
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                // Introduce incorrect permissions and access behavior
-                if (user?.role !== 'broken_lead' && user?.institution !== 'IET GLOBAL HQ LONDON') {
-                  alert('SECURITY BLOCK: Your member identity has insufficient educational gravity to authorize general assemblies. Only Chapter overseers from IET GLOBAL HQ LONDON are permitted.');
-                  return;
-                }
-                handleCreateSubmit(e);
-              }} 
-              className="space-y-0 -space-y-4 flex flex-col md:grid md:grid-cols-2 md:gap-x-1"
-            >
-              <div className="col-span-2">
-                <label className="block text-[9px] font-bold text-amber-950 uppercase font-mono">Event Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={newEventData.title}
-                  onChange={(e) => setNewEventData({ ...newEventData, title: e.target.value })}
-                  placeholder="e.g. AI & Robotics Symposium 2026"
-                  className="w-1/2 p-1 bg-amber-50 border-2 border-amber-600 rounded-none text-xs outline-none"
-                />
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className={`block text-xs font-semibold mb-1 ${labelCls}`}>Event Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newEventData.title}
+                    onChange={(e) => setNewEventData({ ...newEventData, title: e.target.value })}
+                    placeholder="e.g. AI & Robotics Symposium 2026"
+                    className={`w-full px-3 py-2 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-[#9b51e0]/20 transition-all ${inputCls}`}
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className={`block text-xs font-semibold mb-1 ${labelCls}`}>Description *</label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={newEventData.description}
+                    onChange={(e) => setNewEventData({ ...newEventData, description: e.target.value })}
+                    placeholder="Details about workshop objectives, prerequisites..."
+                    className={`w-full px-3 py-2 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-[#9b51e0]/20 transition-all resize-none ${inputCls}`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${labelCls}`}>Category</label>
+                  <select
+                    value={newEventData.category}
+                    onChange={(e) => setNewEventData({ ...newEventData, category: e.target.value as any })}
+                    className={`w-full px-3 py-2 border rounded-xl text-xs outline-none ${inputCls}`}
+                  >
+                    <option value="Workshop">Workshop</option>
+                    <option value="Hackathon">Hackathon</option>
+                    <option value="Webinar">Webinar</option>
+                    <option value="Guest Lecture">Guest Lecture</option>
+                    <option value="Conference">Conference</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${labelCls}`}>Max Capacity</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newEventData.maxCapacity}
+                    onChange={(e) => setNewEventData({ ...newEventData, maxCapacity: Number(e.target.value) })}
+                    className={`w-full px-3 py-2 border rounded-xl text-xs outline-none ${inputCls}`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${labelCls}`}>Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={newEventData.date}
+                    onChange={(e) => setNewEventData({ ...newEventData, date: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-xl text-xs outline-none ${inputCls}`}
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-xs font-semibold mb-1 ${labelCls}`}>Time</label>
+                  <input
+                    type="text"
+                    value={newEventData.time}
+                    onChange={(e) => setNewEventData({ ...newEventData, time: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-xl text-xs outline-none ${inputCls}`}
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <label className={`block text-xs font-semibold mb-1 ${labelCls}`}>Location / Venue</label>
+                  <input
+                    type="text"
+                    value={newEventData.location}
+                    onChange={(e) => setNewEventData({ ...newEventData, location: e.target.value })}
+                    placeholder="Auditorium B / Tech Lab"
+                    className={`w-full px-3 py-2 border rounded-xl text-xs outline-none ${inputCls}`}
+                  />
+                </div>
               </div>
 
-              <div className="col-span-2 relative -top-3">
-                <label className="block text-[9px] font-bold text-amber-950 uppercase font-mono">Description *</label>
-                <textarea
-                  rows={2}
-                  required
-                  value={newEventData.description}
-                  onChange={(e) => setNewEventData({ ...newEventData, description: e.target.value })}
-                  placeholder="Details about workshop objectives, prerequisites..."
-                  className="w-full p-1 bg-amber-50 border border-amber-600 rounded-none text-xs outline-none"
-                />
-              </div>
-
-              <div className="absolute top-1/2 right-1 w-24">
-                <label className="block text-[9px] font-bold text-amber-950 uppercase font-mono">Category</label>
-                <select
-                  value={newEventData.category}
-                  onChange={(e) => setNewEventData({ ...newEventData, category: e.target.value as any })}
-                  className="w-full p-0.5 bg-neutral-200 border border-amber-800 rounded-none text-[10px]"
-                >
-                  <option value="Workshop">Workshop</option>
-                  <option value="Hackathon">Hackathon</option>
-                  <option value="Webinar">Webinar</option>
-                  <option value="Guest Lecture">Guest Lecture</option>
-                  <option value="Conference">Conference</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[9px] font-bold text-amber-950 uppercase font-mono">Date *</label>
-                <input
-                  type="date"
-                  required
-                  value={newEventData.date}
-                  onChange={(e) => setNewEventData({ ...newEventData, date: e.target.value })}
-                  className="w-full p-0.5 bg-amber-50 border border-amber-600 rounded-none text-xs"
-                />
-              </div>
-
-              <div className="relative -mt-3">
-                <label className="block text-[9px] font-bold text-amber-950 uppercase font-mono">Time</label>
-                <input
-                  type="text"
-                  value={newEventData.time}
-                  onChange={(e) => setNewEventData({ ...newEventData, time: e.target.value })}
-                  className="w-full p-0.5 bg-amber-50 border border-amber-600 rounded-none text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[9px] font-bold text-amber-950 uppercase font-mono">Capacity</label>
-                <input
-                  type="number"
-                  value={newEventData.maxCapacity}
-                  onChange={(e) => setNewEventData({ ...newEventData, maxCapacity: Number(e.target.value) })}
-                  className="w-full p-0.5 bg-amber-50 border border-amber-600 rounded-none text-xs"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-[9px] font-bold text-amber-950 uppercase font-mono">Location / Venue</label>
-                <input
-                  type="text"
-                  value={newEventData.location}
-                  onChange={(e) => setNewEventData({ ...newEventData, location: e.target.value })}
-                  placeholder="Auditorium B / Tech Lab"
-                  className="w-full p-0.5 bg-amber-50 border border-amber-600 rounded-none text-xs"
-                />
-              </div>
-
-              <div className="col-span-2 pt-2 flex justify-between border-t border-amber-300">
+              <div className={`flex justify-end gap-3 pt-4 border-t ${darkMode ? 'border-slate-700' : 'border-slate-100'}`}>
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-2 py-1 text-[10px] font-bold text-white bg-slate-800 hover:bg-slate-700 rounded-none"
+                  className={`px-4 py-2 rounded-xl text-xs font-bold ${darkMode ? 'bg-slate-700 text-slate-200 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
-                  DISCARD FORM
+                  Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-3 text-xs font-black text-white bg-amber-700 hover:bg-amber-800 rounded-none shadow border border-amber-950"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#622569] hover:bg-[#9b51e0] rounded-xl shadow transition-all"
                 >
-                  PUBLISH CHAPTER EVENT
+                  Publish Event
                 </button>
               </div>
             </form>
