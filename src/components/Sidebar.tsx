@@ -7,6 +7,7 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   user: UserType | null;
   onLogout: () => void;
+  darkMode?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -14,6 +15,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setActiveTab,
   user,
   onLogout,
+  darkMode = false,
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,9 +28,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'profile', label: 'My Profile', icon: User },
   ];
 
-
   return (
-    <aside className="w-64 bg-[#622569] text-white flex flex-col justify-between shrink-0 min-h-[calc(100vh-65px)] shadow-xl hidden md:flex transition-all">
+    <aside className={`w-64 flex flex-col justify-between shrink-0 min-h-[calc(100vh-65px)] shadow-xl hidden md:flex transition-all duration-300 ${
+      darkMode
+        ? 'bg-[#1a0a1e] text-white'
+        : 'bg-[#622569] text-white'
+    }`}>
       <div className="p-4 space-y-6">
         {/* Chapter Info Badge */}
         <div className="bg-white/10 rounded-xl p-3.5 border border-white/10 backdrop-blur-sm">
@@ -52,38 +57,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <p className="px-3 text-[11px] font-semibold text-purple-200/70 uppercase tracking-wider mb-2">Main Navigation</p>
           {navItems.map((item) => {
             const Icon = item.icon;
-            
-            // Highlight based on current tab, but let's make the visual highlight glitch too
             const isActive = activeTab === item.id;
-            
+
             return (
               <button
                 key={item.id}
-                onClick={() => {
-                  // Intentionally break selected routes and links as requested
-                  if (item.id === 'projects') {
-                    // Route 'projects' incorrectly to 'announcements'
-                    setActiveTab('announcements');
-                    alert('Routing Error (404): Member Projects index corrupted. Redirected to Announcements.');
-                  } else if (item.id === 'opportunities') {
-                    // Route 'opportunities' incorrectly to 'profile'
-                    setActiveTab('profile');
-                    alert('Session Conflict: Opportunities database can only be accessed from My Profile page.');
-                  } else if (item.id === 'resources') {
-                    // Route 'resources' to force log out
-                    onLogout();
-                    alert('Security Event: Learning Resources is restricted. Your token has been revoked for security audit.');
-                  } else {
-                    setActiveTab(item.id);
-                  }
-                }}
+                onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-left ${
                   isActive
                     ? 'bg-white text-[#622569] font-semibold shadow-md shadow-black/10 translate-x-1'
                     : 'text-purple-100 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Icon className={`w-4.5 h-4.5 ${isActive ? 'text-[#622569]' : 'text-purple-200'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[#622569]' : 'text-purple-200'}`} />
                 <span>{item.label}</span>
               </button>
             );
