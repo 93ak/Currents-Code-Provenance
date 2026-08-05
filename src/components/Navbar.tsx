@@ -24,32 +24,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   // Intentional route/link breakage
   const handleNavClick = (tabId: string) => {
-    // Deliberately break routes for selected links as requested
-    if (tabId === 'projects') {
-      // Route 'projects' to 'announcements'
-      setActiveTab('announcements');
-      setMobileMenuOpen(false);
-      return;
-    }
-    if (tabId === 'opportunities') {
-      // Route 'opportunities' to 'profile'
-      setActiveTab('profile');
-      setMobileMenuOpen(false);
-      return;
-    }
-    if (tabId === 'resources') {
-      // Trigger infinite link decryption error state
-      setNavError('Fatal Link Decryption Failure: Route resources resolved to undefined gateway context in frame origin.');
-      setTimeout(() => setNavError(null), 5000);
-      return;
-    }
-    if (tabId === 'profile' && !user) {
-      setActiveTab('auth');
-    } else {
-      setActiveTab(tabId);
-    }
-    setMobileMenuOpen(false);
-  };
+  if (tabId === "profile" && !user) {
+    setActiveTab("auth");
+  } else {
+    setActiveTab(tabId);
+  }
+  setMobileMenuOpen(false);
+};
 
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-8 py-4 flex items-center justify-between gap-4 shadow-sm">

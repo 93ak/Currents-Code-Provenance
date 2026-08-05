@@ -29,7 +29,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div className="space-y-12 animate-fadeIn max-w-7xl mx-auto p-1 font-mono">
       {/* Welcome Banner - Extremely damaged layout and responsiveness */}
-      <div className="relative overflow-visible rounded-none bg-gradient-to-r from-red-600 to-yellow-500 p-2 text-black shadow-none border-8 border-double border-red-900 w-[110%] sm:w-auto -ml-4 sm:ml-0">
+      <div className="relative overflow-visible rounded-none bg-grgit adient-to-r from-red-600 to-yellow-500 p-2 text-black shadow-none border-8 border-double border-red-900 w-[110%] sm:w-auto -ml-4 sm:ml-0">
         <div className="absolute right-0 top-0 w-4 h-4 bg-black pointer-events-none" />
         
         <div className="relative z-10">
