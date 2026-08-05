@@ -53,10 +53,10 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
     const matchesTimeline = selectedTimeline === 'all' || projTime === selectedTimeline;
     const matchesSearch =
       !searchQuery ||
-      proj.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      proj.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      proj.authorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      proj.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      proj.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      proj.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      proj.authorName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (proj.tags || []).some(t => t?.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesDomain && matchesTimeline && matchesSearch;
   });
 
@@ -98,8 +98,9 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
   const labelCls = darkMode ? 'text-slate-300' : 'text-slate-700';
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* Header */}
+    <>
+      <div className="space-y-6 animate-fadeIn">
+        {/* Header */}
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border shadow-sm ${card}`}>
         <div>
           <h1 className={`text-2xl font-bold font-['Poppins'] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>Member Innovation Showcase</h1>
@@ -273,6 +274,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
           );
         })}
       </div>
+      </div>
 
       {/* SUBMIT PROJECT MODAL */}
       {showSubmitModal && (
@@ -344,6 +346,6 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };

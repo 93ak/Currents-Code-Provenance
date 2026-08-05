@@ -56,10 +56,10 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
     const matchesTimeline = selectedTimeline === 'all' || oppTime === selectedTimeline;
     const matchesSearch =
       !searchQuery ||
-      opp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      opp.companyOrOrg.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      opp.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      opp.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      opp.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      opp.companyOrOrg?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      opp.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (opp.tags || []).some(t => t?.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesType && matchesTimeline && matchesSearch;
   });
 
@@ -109,8 +109,9 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
   const labelCls = darkMode ? 'text-slate-300' : 'text-slate-700';
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* Header */}
+    <>
+      <div className="space-y-6 animate-fadeIn">
+        {/* Header */}
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border shadow-sm ${card}`}>
         <div>
           <h1 className={`text-2xl font-bold font-['Poppins'] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>Career & Academic Opportunities</h1>
@@ -261,6 +262,7 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
           <p className={`text-sm font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>No opportunities match the current filters.</p>
         </div>
       )}
+      </div>
 
       {/* OPPORTUNITY DETAILS MODAL */}
       {activeOppModal && (
@@ -398,6 +400,6 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
