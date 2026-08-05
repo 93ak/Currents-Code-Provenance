@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Event, User } from '../types';
-import { Calendar, Clock, MapPin, Users, CheckCircle2, Search, PlusCircle, Video, UserCheck, Sparkles, X, Link, Play, Image as ImageIcon } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, CheckCircle2, Search, PlusCircle, Video, UserCheck, Sparkles, X, Link, Play, Image as ImageIcon, Trash2 } from 'lucide-react';
 
 interface EventsViewProps {
   events: Event[];
   user: User | null;
   onRegisterEvent: (eventId: string) => void;
   onCreateEvent: (eventData: Partial<Event>) => Promise<boolean>;
+  onDeleteEvent?: (id: string) => void;
   searchQuery: string;
   darkMode?: boolean;
 }
@@ -16,6 +17,7 @@ export const EventsView: React.FC<EventsViewProps> = ({
   user,
   onRegisterEvent,
   onCreateEvent,
+  onDeleteEvent,
   searchQuery,
   darkMode = false,
 }) => {
@@ -247,6 +249,20 @@ export const EventsView: React.FC<EventsViewProps> = ({
                     <span>Register</span>
                   )}
                 </button>
+
+                {user && (user.role === 'admin' || user.id === evt.organizer) && onDeleteEvent && (
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to delete this event?')) {
+                        onDeleteEvent(evt.id);
+                      }
+                    }}
+                    className="p-2 ml-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors border border-rose-200"
+                    title="Delete Event"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           );

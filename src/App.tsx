@@ -12,6 +12,7 @@ import { OpportunitiesView } from './components/OpportunitiesView';
 import { ResourcesView } from './components/ResourcesView';
 import { MembersView } from './components/MembersView';
 import { AnnouncementsView } from './components/AnnouncementsView';
+import { AdminView } from './components/AdminView';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 
@@ -113,6 +114,20 @@ export default function App() {
     setCurrentUser(null);
     setActiveTab('auth');
     showToast('Signed out successfully.');
+  };
+
+  const handleDeleteEntity = async (type: 'projects' | 'events' | 'opportunities' | 'resources' | 'announcements', id: string) => {
+    try {
+      const res = await api.deleteEntity(type, id);
+      if (res.success) {
+        showToast('Item deleted successfully.', 'success');
+        loadAppData(); // Refresh all data to reflect the deletion
+      } else {
+        showToast(res.message || 'Failed to delete item.', 'error');
+      }
+    } catch {
+      showToast('Error communicating with server.', 'error');
+    }
   };
 
   // Event Registration Handler
@@ -310,6 +325,7 @@ export default function App() {
               user={currentUser}
               onRegisterEvent={handleRegisterEvent}
               onCreateEvent={handleCreateEvent}
+              onDeleteEvent={(id) => handleDeleteEntity('events', id)}
               searchQuery={searchQuery}
               darkMode={darkMode}
             />
@@ -321,6 +337,7 @@ export default function App() {
               user={currentUser}
               onLikeProject={handleLikeProject}
               onSubmitProject={handleSubmitProject}
+              onDeleteProject={(id) => handleDeleteEntity('projects', id)}
               searchQuery={searchQuery}
               darkMode={darkMode}
             />
@@ -331,6 +348,7 @@ export default function App() {
               opportunities={opportunities}
               user={currentUser}
               onCreateOpportunity={handleCreateOpportunity}
+              onDeleteOpportunity={(id) => handleDeleteEntity('opportunities', id)}
               searchQuery={searchQuery}
               darkMode={darkMode}
             />
@@ -341,7 +359,15 @@ export default function App() {
               resources={resources}
               user={currentUser}
               onCreateResource={handleCreateResource}
+              onDeleteResource={(id) => handleDeleteEntity('resources', id)}
               searchQuery={searchQuery}
+              darkMode={darkMode}
+            />
+          )}
+
+          {activeTab === 'admin' && (
+            <AdminView
+              currentUser={currentUser}
               darkMode={darkMode}
             />
           )}
@@ -358,6 +384,8 @@ export default function App() {
           {activeTab === 'announcements' && (
             <AnnouncementsView
               announcements={announcements}
+              user={currentUser}
+              onDeleteAnnouncement={(id) => handleDeleteEntity('announcements', id)}
               darkMode={darkMode}
             />
           )}

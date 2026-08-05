@@ -617,5 +617,16 @@
       "date": "2026-07-25",
       "pinned": false
     }
+  ],
+  "activities": [
+    {
+      "id": "act_1",
+      "userId": "system",
+      "userName": "System",
+      "action": "INIT",
+      "entityType": "System",
+      "timestamp": "2026-08-05T06:32:18.209Z",
+      "details": "Database initialized with seed data"
+    }
   ]
 }

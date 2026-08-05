@@ -116,3 +116,14 @@ export interface AuthResponse {
   message?: string;
 }
 
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  userName: string;
+  action: string;
+  entityType: 'User' | 'Event' | 'Project' | 'Opportunity' | 'Resource' | 'Announcement' | 'System';
+  entityId?: string;
+  entityName?: string;
+  timestamp: string;
+  details?: string;
+}
