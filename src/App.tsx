@@ -53,11 +53,12 @@ export default function App() {
   const [members, setMembers] = useState<User[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   // Toast notifications
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
 
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
   };
@@ -102,6 +103,27 @@ export default function App() {
     loadAppData();
   }, []);
 
+  useEffect(() => {
+    if (currentUser) {
+      api.getNotifications().then(res => {
+        if (res.success) setNotifications(res.notifications);
+      });
+    } else {
+      setNotifications([]);
+    }
+  }, [currentUser]);
+
+  const handleMarkNotificationRead = async (id: string) => {
+    try {
+      const res = await api.markNotificationRead(id);
+      if (res.success && res.notification) {
+        setNotifications(notifications.map(n => n.id === id ? res.notification! : n));
+      }
+    } catch (err) {
+      console.error('Failed to mark notification read', err);
+    }
+  };
+
   const handleAuthSuccess = (user: User) => {
     setCurrentUser(user);
     setActiveTab('dashboard');
@@ -142,7 +164,12 @@ export default function App() {
       const res = await api.registerEvent(eventId);
       if (res.success && res.event) {
         setEvents(events.map(e => e.id === eventId ? res.event! : e));
-        showToast('Successfully registered for the event!', 'success');
+        if (res.isDuplicate && res.notification) {
+          setNotifications([res.notification, ...notifications]);
+          showToast('Duplicate registration prevented.', 'warning');
+        } else {
+          showToast('Successfully registered for the event!', 'success');
+        }
       } else {
         showToast(res.message || 'Registration failed. Please try again.', 'error');
       }
@@ -284,6 +311,8 @@ export default function App() {
         setSearchQuery={setSearchQuery}
         darkMode={darkMode}
         toggleDarkMode={toggleDarkMode}
+        notifications={notifications}
+        onMarkNotificationRead={handleMarkNotificationRead}
       />
 
       {/* Main Body */}

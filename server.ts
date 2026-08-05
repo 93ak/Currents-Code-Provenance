@@ -252,19 +252,39 @@ async function startServer() {
       }
       event.registeredUserIds.push(userId);
       isRegistered = true;
+      
+      logActivity(userId, 'System', 'Registered for Event', 'Event', event.id, event.title);
+      persist();
+
+      res.json({
+        success: true,
+        registered: isRegistered,
+        event,
+        message: 'Successfully registered for event!'
+      });
     } else {
-      event.registeredUserIds.splice(registeredIndex, 1);
-      isRegistered = false;
+      // Duplicate Registration Attempt
+      if (!db.notifications) db.notifications = [];
+      const newNotification = {
+        id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        userId: userId,
+        message: `Duplicate Registration: You are already registered for "${event.title}".`,
+        type: 'warning',
+        read: false,
+        timestamp: new Date().toISOString()
+      };
+      db.notifications.unshift(newNotification);
+      persist();
+
+      res.json({
+        success: true,
+        registered: true,
+        event,
+        isDuplicate: true,
+        notification: newNotification,
+        message: 'You are already registered for this event.'
+      });
     }
-
-    persist();
-
-    res.json({
-      success: true,
-      registered: isRegistered,
-      event,
-      message: isRegistered ? 'Successfully registered for event!' : 'Unregistered from event.'
-    });
   });
 
   // --- PROJECTS API ---
@@ -514,6 +534,35 @@ async function startServer() {
     res.json({ success: true, message: 'User deleted' });
   });
 
+  // --- NOTIFICATIONS API ---
+  app.get('/api/notifications', (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    const userId = authHeader.replace('Bearer iet_token_', '').trim();
+    const userNotifs = (db.notifications || []).filter(n => n.userId === userId);
+    res.json({ success: true, notifications: userNotifs });
+  });
+
+  app.put('/api/notifications/:id/read', (req, res) => {
+    const { id } = req.params;
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    const userId = authHeader.replace('Bearer iet_token_', '').trim();
+    const notif = (db.notifications || []).find(n => n.id === id && n.userId === userId);
+    
+    if (!notif) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+    
+    notif.read = true;
+    persist();
+    res.json({ success: true, notification: notif });
+  });
+
   // Vite middleware / static files setup
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
@@ -524,6 +573,8 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
+
+    // Default Route
     app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });

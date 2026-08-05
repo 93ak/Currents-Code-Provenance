@@ -159,7 +159,8 @@
       "bannerUrl": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80",
       "maxCapacity": 60,
       "registeredUserIds": [
-        "usr_sarah"
+        "usr_sarah",
+        "usr_demo"
       ],
       "tags": [
         "Robotics",
@@ -620,6 +621,16 @@
   ],
   "activities": [
     {
+      "id": "act_1785914527620_eslvh",
+      "userId": "usr_demo",
+      "userName": "System",
+      "action": "Registered for Event",
+      "entityType": "Event",
+      "entityId": "evt_3",
+      "entityName": "Robotics & Embedded Systems Hands-On Bootcamp",
+      "timestamp": "2026-08-05T07:22:07.620Z"
+    },
+    {
       "id": "act_1",
       "userId": "system",
       "userName": "System",
@@ -627,6 +638,16 @@
       "entityType": "System",
       "timestamp": "2026-08-05T06:32:18.209Z",
       "details": "Database initialized with seed data"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif_1785914559714_1tpra",
+      "userId": "usr_demo",
+      "message": "Duplicate Registration: You are already registered for \"Robotics & Embedded Systems Hands-On Bootcamp\".",
+      "type": "warning",
+      "read": false,
+      "timestamp": "2026-08-05T07:22:39.714Z"
     }
   ]
 }

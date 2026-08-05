@@ -148,11 +148,10 @@ export const api = {
     return fetchWithCache('/api/events');
   },
 
-  async registerEvent(eventId: string): Promise<{ success: boolean; registered?: boolean; event?: Event; message?: string }> {
-    invalidateApiCache();
+  async registerEvent(eventId: string): Promise<{ success: boolean; registered?: boolean; event?: Event; message?: string; isDuplicate?: boolean; notification?: any }> {
     const res = await fetch(`/api/events/${eventId}/register`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getAuthHeaders()
     });
     return res.json();
   },
@@ -257,6 +256,20 @@ export const api = {
   // Admin
   async getActivities(): Promise<{ success: boolean; activities: any[]; message?: string }> {
     const res = await fetch('/api/admin/activities', { headers: getAuthHeaders() });
+    return res.json();
+  },
+
+  // Notifications
+  async getNotifications(): Promise<{ success: boolean; notifications: any[] }> {
+    const res = await fetch('/api/notifications', { headers: getAuthHeaders() });
+    return res.json();
+  },
+  
+  async markNotificationRead(id: string): Promise<{ success: boolean; notification?: any }> {
+    const res = await fetch(`/api/notifications/${id}/read`, {
+      method: 'PUT',
+      headers: getAuthHeaders()
+    });
     return res.json();
   },
 

@@ -127,3 +127,12 @@ export interface ActivityLog {
   timestamp: string;
   details?: string;
 }
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  read: boolean;
+  timestamp: string;
+}

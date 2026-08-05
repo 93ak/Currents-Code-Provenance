@@ -16,6 +16,8 @@ interface NavbarProps {
   setSearchQuery: (query: string) => void;
   darkMode: boolean;
   toggleDarkMode: () => void;
+  notifications?: any[];
+  onMarkNotificationRead?: (id: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -27,8 +29,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   setSearchQuery,
   darkMode,
   toggleDarkMode,
+  notifications = [],
+  onMarkNotificationRead,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showNotifs, setShowNotifs] = useState(false);
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleNavClick = (tabId: string) => {
     if (tabId === 'profile' && !user) {
@@ -131,18 +138,61 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {user ? (
           <>
-            <button
-              onClick={() => handleNavClick('announcements')}
-              className={`relative p-2.5 rounded-xl border transition-colors ${
-                darkMode
-                  ? 'text-slate-300 hover:text-[#9b51e0] border-slate-700 hover:bg-slate-800'
-                  : 'text-slate-600 hover:text-[#622569] border-slate-200/60 hover:bg-slate-50'
-              }`}
-              title="Notifications"
-            >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifs(!showNotifs)}
+                className={`relative p-2.5 rounded-xl border transition-colors ${
+                  darkMode
+                    ? 'text-slate-300 hover:text-[#9b51e0] border-slate-700 hover:bg-slate-800'
+                    : 'text-slate-600 hover:text-[#622569] border-slate-200/60 hover:bg-slate-50'
+                }`}
+                title="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+                )}
+              </button>
+
+              {showNotifs && (
+                <div className={`absolute right-0 mt-2 w-80 rounded-2xl shadow-xl border overflow-hidden z-50 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
+                  <div className={`p-4 border-b font-bold font-['Poppins'] ${darkMode ? 'border-slate-700 text-white' : 'border-slate-100 text-slate-900'}`}>
+                    Notifications ({unreadCount})
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className={`p-6 text-center text-sm ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      notifications.map(n => (
+                        <div
+                          key={n.id}
+                          onClick={() => {
+                            if (!n.read && onMarkNotificationRead) onMarkNotificationRead(n.id);
+                          }}
+                          className={`p-4 border-b cursor-pointer transition-colors ${darkMode ? 'border-slate-700 hover:bg-slate-700/50' : 'border-slate-50 hover:bg-slate-50'} ${!n.read ? (darkMode ? 'bg-slate-700/30' : 'bg-purple-50/50') : ''}`}
+                        >
+                          <div className="flex gap-3">
+                            <div className="mt-0.5">
+                              {n.type === 'warning' ? <span className="text-amber-500">⚠️</span> : <Bell className={`w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-slate-400'}`} />}
+                            </div>
+                            <div>
+                              <p className={`text-xs leading-relaxed ${darkMode ? 'text-slate-200' : 'text-slate-700'} ${!n.read ? 'font-semibold' : ''}`}>
+                                {n.message}
+                              </p>
+                              <p className={`text-[10px] mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                {new Date(n.timestamp).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* User Profile Pill */}
             <div className={`flex items-center gap-2 pl-2 border-l ${darkMode ? 'border-slate-700' : 'border-slate-200'}`}>

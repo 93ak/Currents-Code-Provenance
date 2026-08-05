@@ -10,6 +10,7 @@ interface DatabaseSchema {
   opportunities: Opportunity[];
   resources: Resource[];
   activities: ActivityLog[];
+  notifications: any[];
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -480,7 +481,8 @@ const INITIAL_DATA: DatabaseSchema = {
       timestamp: new Date().toISOString(),
       details: 'Database initialized with seed data'
     }
-  ]
+  ],
+  notifications: []
 };
 
 // Ensure data directory and file exist
@@ -506,6 +508,9 @@ export function initDb(): DatabaseSchema {
     }
     if (!parsed.activities) {
       parsed.activities = INITIAL_DATA.activities;
+    }
+    if (!parsed.notifications) {
+      parsed.notifications = INITIAL_DATA.notifications;
     }
     // Also ensure events & projects have our rich past/present/future seed items if missing
     const existingEventIds = new Set(parsed.events.map((e: Event) => e.id));

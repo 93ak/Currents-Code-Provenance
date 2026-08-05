@@ -319,7 +319,7 @@ export const EventsView: React.FC<EventsViewProps> = ({
                 }}
                 className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#622569] hover:bg-[#9b51e0] shadow"
               >
-                Toggle Registration
+                Register Now
               </button>
             </div>
           </div>
