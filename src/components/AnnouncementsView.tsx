@@ -1,13 +1,16 @@
 import React from 'react';
 import { Announcement } from '../types';
-import { Megaphone, Pin, Calendar, UserCheck } from 'lucide-react';
+import { Megaphone, Pin, Calendar, UserCheck, Trash2 } from 'lucide-react';
+import { User } from '../types';
 
 interface AnnouncementsViewProps {
   announcements: Announcement[];
+  user: User | null;
+  onDeleteAnnouncement?: (id: string) => void;
   darkMode?: boolean;
 }
 
-export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({ announcements, darkMode = false }) => {
+export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({ announcements, user, onDeleteAnnouncement, darkMode = false }) => {
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
       {/* Header */}
@@ -65,6 +68,19 @@ export const AnnouncementsView: React.FC<AnnouncementsViewProps> = ({ announceme
                 <UserCheck className="w-3.5 h-3.5 text-slate-400" />
                 <span>Issued by <strong>{ann.authorName}</strong> ({ann.authorRole})</span>
               </span>
+              {user && user.role === 'admin' && onDeleteAnnouncement && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this announcement?')) {
+                      onDeleteAnnouncement(ann.id);
+                    }
+                  }}
+                  className="p-1.5 ml-auto rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors border border-rose-200"
+                  title="Delete Announcement"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         ))}

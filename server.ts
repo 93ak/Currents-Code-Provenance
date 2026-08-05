@@ -18,6 +18,24 @@ async function startServer() {
   // Helper to sync db
   const persist = () => saveDb(db);
 
+  // Helper to log activities
+  const logActivity = (userId: string, userName: string, action: string, entityType: any, entityId?: string, entityName?: string, details?: string) => {
+    if (!db.activities) db.activities = [];
+    db.activities.unshift({
+      id: `act_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      userId, userName, action, entityType, entityId, entityName, timestamp: new Date().toISOString(), details
+    });
+    if (db.activities.length > 500) db.activities.length = 500;
+  };
+
+  // Helper to get user from request
+  const getUserFromReq = (req: express.Request) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return null;
+    const userId = authHeader.replace('Bearer iet_token_', '').trim();
+    return db.users.find(u => u.id === userId) || null;
+  };
+
   // --- API ROUTES ---
 
   // Health check
@@ -415,6 +433,86 @@ async function startServer() {
     res.status(201).json({ success: true, resource: newResource, message: 'Resource shared with community!' });
   });
 
+  // --- GENERAL CRUD & ADMIN ---
+
+  const canEditOrDelete = (user: User | null, authorId: string) => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    if (user.id === authorId) return true;
+    return false;
+  };
+
+  const entitiesConfig = [
+    { name: 'projects', array: () => db.projects, getAuthorId: (e: any) => e.authorId || '' },
+    { name: 'events', array: () => db.events, getAuthorId: (e: any) => e.organizerId || '' },
+    { name: 'opportunities', array: () => db.opportunities, getAuthorId: (e: any) => e.authorId || '' },
+    { name: 'resources', array: () => db.resources, getAuthorId: (e: any) => e.authorId || '' },
+    { name: 'announcements', array: () => db.announcements, getAuthorId: (e: any) => e.authorId || '' }
+  ];
+
+  entitiesConfig.forEach(({ name, array, getAuthorId }) => {
+    app.delete(`/api/${name}/:id`, (req, res) => {
+      const user = getUserFromReq(req);
+      if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+      const items = array();
+      const index = items.findIndex((item: any) => item.id === req.params.id);
+      if (index === -1) return res.status(404).json({ success: false, message: 'Not found' });
+      
+      const item = items[index];
+      const authorId = getAuthorId(item);
+      
+      if (!canEditOrDelete(user, authorId)) {
+        return res.status(403).json({ success: false, message: 'Forbidden: You do not have permission to delete this.' });
+      }
+
+      items.splice(index, 1);
+      logActivity(user.id, user.username, 'DELETE', name.toUpperCase() as any, item.id, item.title || item.id, `Deleted ${name} item`);
+      persist();
+      res.json({ success: true, message: 'Deleted successfully' });
+    });
+  });
+
+  // Admin Routes
+  app.get('/api/admin/activities', (req, res) => {
+    const user = getUserFromReq(req);
+    if (!user || user.role !== 'admin') return res.status(403).json({ success: false, message: 'Forbidden' });
+    res.json({ success: true, activities: db.activities || [] });
+  });
+
+  app.put('/api/admin/users/:id/role', (req, res) => {
+    const user = getUserFromReq(req);
+    if (!user || user.role !== 'admin') return res.status(403).json({ success: false, message: 'Forbidden' });
+    
+    const targetUser = db.users.find(u => u.id === req.params.id);
+    if (!targetUser) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const newRole = req.body.role;
+    if (['member', 'lead', 'admin'].includes(newRole)) {
+      targetUser.role = newRole as any;
+      logActivity(user.id, user.username, 'UPDATE_ROLE', 'User', targetUser.id, targetUser.username, `Changed role to ${newRole}`);
+      persist();
+      res.json({ success: true, message: `Role updated to ${newRole}` });
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid role' });
+    }
+  });
+
+  app.delete('/api/admin/users/:id', (req, res) => {
+    const user = getUserFromReq(req);
+    if (!user || user.role !== 'admin') return res.status(403).json({ success: false, message: 'Forbidden' });
+    
+    const index = db.users.findIndex(u => u.id === req.params.id);
+    if (index === -1) return res.status(404).json({ success: false, message: 'User not found' });
+    
+    const targetUser = db.users[index];
+    if (targetUser.id === user.id) return res.status(400).json({ success: false, message: 'Cannot delete yourself' });
+
+    db.users.splice(index, 1);
+    logActivity(user.id, user.username, 'DELETE_USER', 'User', targetUser.id, targetUser.username, 'Deleted user account');
+    persist();
+    res.json({ success: true, message: 'User deleted' });
+  });
 
   // Vite middleware / static files setup
   if (process.env.NODE_ENV !== 'production') {

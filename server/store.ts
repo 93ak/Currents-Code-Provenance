@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { User, Event, Project, Announcement, Opportunity, Resource } from '../src/types.js';
+import { User, Event, Project, Announcement, Opportunity, Resource, ActivityLog } from '../src/types.js';
 
 interface DatabaseSchema {
   users: (User & { passwordHash: string })[];
@@ -9,6 +9,7 @@ interface DatabaseSchema {
   announcements: Announcement[];
   opportunities: Opportunity[];
   resources: Resource[];
+  activities: ActivityLog[];
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -468,6 +469,17 @@ const INITIAL_DATA: DatabaseSchema = {
       date: '2026-07-25',
       pinned: false
     }
+  ],
+  activities: [
+    {
+      id: 'act_1',
+      userId: 'system',
+      userName: 'System',
+      action: 'INIT',
+      entityType: 'System',
+      timestamp: new Date().toISOString(),
+      details: 'Database initialized with seed data'
+    }
   ]
 };
 
@@ -491,6 +503,9 @@ export function initDb(): DatabaseSchema {
     }
     if (!parsed.resources || parsed.resources.length === 0) {
       parsed.resources = INITIAL_DATA.resources;
+    }
+    if (!parsed.activities) {
+      parsed.activities = INITIAL_DATA.activities;
     }
     // Also ensure events & projects have our rich past/present/future seed items if missing
     const existingEventIds = new Set(parsed.events.map((e: Event) => e.id));

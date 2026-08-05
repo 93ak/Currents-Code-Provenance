@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Calendar, FolderGit2, Users, User, Megaphone, LogOut, Award, Briefcase, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Calendar, FolderGit2, Users, User, Megaphone, LogOut, Award, Briefcase, BookOpen, ShieldAlert } from 'lucide-react';
 import { User as UserType } from '../types';
 
 interface SidebarProps {
@@ -27,6 +27,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'announcements', label: 'Announcements', icon: Megaphone },
     { id: 'profile', label: 'My Profile', icon: User },
   ];
+
+  if (user?.role === 'admin') {
+    navItems.push({ id: 'admin', label: 'Admin Panel', icon: ShieldAlert });
+  }
 
   return (
     <aside className={`w-64 flex flex-col justify-between shrink-0 min-h-[calc(100vh-65px)] shadow-xl hidden md:flex transition-all duration-300 ${

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Project, User } from '../types';
-import { Github, ExternalLink, Star, PlusCircle, Search, Sparkles, X, Code2 } from 'lucide-react';
+import { Github, ExternalLink, Star, PlusCircle, Search, Sparkles, X, Code2, Trash2 } from 'lucide-react';
 
 interface ProjectsViewProps {
   projects: Project[];
   user: User | null;
   onLikeProject: (projectId: string) => void;
   onSubmitProject: (projectData: Partial<Project>) => Promise<boolean>;
+  onDeleteProject?: (id: string) => void;
   searchQuery: string;
   darkMode?: boolean;
 }
@@ -16,6 +17,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
   user,
   onLikeProject,
   onSubmitProject,
+  onDeleteProject,
   searchQuery,
   darkMode = false,
 }) => {
@@ -251,6 +253,20 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     <span>Live Demo</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
+                )}
+
+                {user && (user.role === 'admin' || user.id === proj.authorId) && onDeleteProject && (
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to delete this project?')) {
+                        onDeleteProject(proj.id);
+                      }
+                    }}
+                    className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition-colors ml-auto border border-rose-200"
+                    title="Delete Project"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 )}
               </div>
             </div>

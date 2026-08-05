@@ -242,6 +242,41 @@ export const api = {
       opportunities: opportunities.opportunities || [],
       resources: resources.resources || [],
     };
+  },
+
+  // CRUD Deletes
+  async deleteEntity(entity: 'events' | 'projects' | 'opportunities' | 'resources' | 'announcements', id: string): Promise<{ success: boolean; message?: string }> {
+    invalidateApiCache();
+    const res = await fetch(`/api/${entity}/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  // Admin
+  async getActivities(): Promise<{ success: boolean; activities: any[]; message?: string }> {
+    const res = await fetch('/api/admin/activities', { headers: getAuthHeaders() });
+    return res.json();
+  },
+
+  async updateUserRole(userId: string, role: string): Promise<{ success: boolean; message?: string }> {
+    invalidateApiCache();
+    const res = await fetch(`/api/admin/users/${userId}/role`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ role })
+    });
+    return res.json();
+  },
+
+  async deleteUser(userId: string): Promise<{ success: boolean; message?: string }> {
+    invalidateApiCache();
+    const res = await fetch(`/api/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return res.json();
   }
 };
 

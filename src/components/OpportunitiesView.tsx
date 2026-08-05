@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Opportunity, User } from '../types';
-import { Briefcase, MapPin, DollarSign, Calendar, ExternalLink, PlusCircle, Search, Sparkles, X, CheckCircle, Tag, Building2 } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, Calendar, ExternalLink, PlusCircle, Search, Sparkles, X, CheckCircle, Tag, Building2, Trash2 } from 'lucide-react';
 
 interface OpportunitiesViewProps {
   opportunities: Opportunity[];
   user: User | null;
   onCreateOpportunity: (oppData: Partial<Opportunity>) => Promise<boolean>;
+  onDeleteOpportunity?: (id: string) => void;
   searchQuery: string;
   darkMode?: boolean;
 }
@@ -14,6 +15,7 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
   opportunities,
   user,
   onCreateOpportunity,
+  onDeleteOpportunity,
   searchQuery,
   darkMode = false,
 }) => {
@@ -234,6 +236,19 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
                   >
                     Apply Now <ExternalLink className="w-3 h-3" />
                   </a>
+                )}
+                {user && user.role === 'admin' && onDeleteOpportunity && (
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to delete this opportunity?')) {
+                        onDeleteOpportunity(opp.id);
+                      }
+                    }}
+                    className="p-2 ml-auto rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors border border-rose-200"
+                    title="Delete Opportunity"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 )}
               </div>
             </div>
