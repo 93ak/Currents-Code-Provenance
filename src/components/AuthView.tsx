@@ -11,26 +11,7 @@ interface AuthViewProps {
   darkMode?: boolean;
 }
 
-// Common country codes with flag emoji + dial code
-const COUNTRY_CODES = [
-  { code: 'IN', dial: '+91', flag: '🇮🇳', name: 'India' },
-  { code: 'US', dial: '+1',  flag: '🇺🇸', name: 'USA' },
-  { code: 'GB', dial: '+44', flag: '🇬🇧', name: 'UK' },
-  { code: 'AU', dial: '+61', flag: '🇦🇺', name: 'Australia' },
-  { code: 'CA', dial: '+1',  flag: '🇨🇦', name: 'Canada' },
-  { code: 'SG', dial: '+65', flag: '🇸🇬', name: 'Singapore' },
-  { code: 'AE', dial: '+971',flag: '🇦🇪', name: 'UAE' },
-  { code: 'DE', dial: '+49', flag: '🇩🇪', name: 'Germany' },
-  { code: 'FR', dial: '+33', flag: '🇫🇷', name: 'France' },
-  { code: 'JP', dial: '+81', flag: '🇯🇵', name: 'Japan' },
-  { code: 'CN', dial: '+86', flag: '🇨🇳', name: 'China' },
-  { code: 'BR', dial: '+55', flag: '🇧🇷', name: 'Brazil' },
-  { code: 'ZA', dial: '+27', flag: '🇿🇦', name: 'South Africa' },
-  { code: 'NG', dial: '+234',flag: '🇳🇬', name: 'Nigeria' },
-  { code: 'PK', dial: '+92', flag: '🇵🇰', name: 'Pakistan' },
-  { code: 'LK', dial: '+94', flag: '🇱🇰', name: 'Sri Lanka' },
-  { code: 'BD', dial: '+880',flag: '🇧🇩', name: 'Bangladesh' },
-];
+import { COUNTRY_CODES } from '../countryCodes';
 
 /**
  * Validates a phone number (just the local part, without country code).
@@ -337,21 +318,21 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess, darkMode = fa
                     Phone Number
                     <span className={`ml-1 font-normal ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>(optional)</span>
                   </label>
-                  <div className="flex gap-2">
+                  <div className={`flex items-center border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#9b51e0]/20 transition-all ${darkMode ? 'border-slate-600 bg-slate-800' : 'border-slate-200 bg-slate-50'}`}>
                     {/* Country Code Selector */}
-                    <div className="relative shrink-0">
+                    <div className={`relative shrink-0 border-r ${darkMode ? 'border-slate-600' : 'border-slate-200'}`}>
                       <select
                         value={selectedCountry.code}
                         onChange={(e) => {
                           const found = COUNTRY_CODES.find(c => c.code === e.target.value);
                           if (found) setSelectedCountry(found);
                         }}
-                        className={`appearance-none h-full pl-2 pr-7 py-2 border rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-[#9b51e0]/20 transition-all cursor-pointer ${inputBase}`}
+                        className={`appearance-none h-full pl-3 pr-7 py-2 bg-transparent text-xs font-mono font-medium outline-none cursor-pointer ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}
                         title="Select country code"
                       >
                         {COUNTRY_CODES.map(c => (
                           <option key={c.code} value={c.code}>
-                            {c.flag} {c.dial}
+                            {c.dial.padEnd(5, '\u00A0')} {c.flag}
                           </option>
                         ))}
                       </select>
@@ -360,13 +341,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ onAuthSuccess, darkMode = fa
 
                     {/* Local Number Input */}
                     <div className="relative flex-1">
-                      <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+                      <Phone className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                       <input
                         type="tel"
                         value={localPhone}
                         onChange={(e) => handlePhoneChange(e.target.value)}
                         placeholder="98765 43210"
-                        className={`${inputCls} pl-9 pr-3 py-2 text-xs ${phoneError ? 'border-rose-400 focus:ring-rose-200' : ''}`}
+                        className={`w-full bg-transparent pl-9 pr-3 py-2 text-xs outline-none ${darkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-900 placeholder:text-slate-400'}`}
                         maxLength={17}
                       />
                     </div>
