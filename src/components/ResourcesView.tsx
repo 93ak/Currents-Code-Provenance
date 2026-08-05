@@ -51,10 +51,10 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
     const matchesTimeline = selectedTimeline === 'all' || resTime === selectedTimeline;
     const matchesSearch =
       !searchQuery ||
-      res.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      res.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      res.authorOrProvider.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      res.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      res.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      res.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      res.authorOrProvider?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (res.tags || []).some(t => t?.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCat && matchesTimeline && matchesSearch;
   });
 
@@ -105,8 +105,9 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
   const labelCls = darkMode ? 'text-slate-300' : 'text-slate-700';
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* Header */}
+    <>
+      <div className="space-y-6 animate-fadeIn">
+        {/* Header */}
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border shadow-sm ${card}`}>
         <div>
           <h1 className={`text-2xl font-bold font-['Poppins'] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>Engineering & Academic Resources</h1>
@@ -237,6 +238,7 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
           <p className={`text-sm font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>No resources match the current filters.</p>
         </div>
       )}
+      </div>
 
       {/* RESOURCE DETAILS MODAL */}
       {activeResModal && (
@@ -365,6 +367,6 @@ export const ResourcesView: React.FC<ResourcesViewProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };

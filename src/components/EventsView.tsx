@@ -55,9 +55,9 @@ export const EventsView: React.FC<EventsViewProps> = ({
     const matchesTimeline = selectedTimeline === 'all' || evtTime === selectedTimeline;
     const matchesSearch =
       !searchQuery ||
-      evt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      evt.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      evt.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      evt.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      evt.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (evt.tags || []).some(t => t?.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCat && matchesTimeline && matchesSearch;
   });
 
@@ -91,8 +91,9 @@ export const EventsView: React.FC<EventsViewProps> = ({
   const labelCls = darkMode ? 'text-slate-300' : 'text-slate-700';
 
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* Header */}
+    <>
+      <div className="space-y-6 animate-fadeIn">
+        {/* Header */}
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border shadow-sm ${card}`}>
         <div>
           <h1 className={`text-2xl font-bold font-['Poppins'] ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>Chapter Events & Workshops</h1>
@@ -267,6 +268,7 @@ export const EventsView: React.FC<EventsViewProps> = ({
             </div>
           );
         })}
+      </div>
       </div>
 
       {/* EVENT DETAILS MODAL */}
@@ -443,6 +445,6 @@ export const EventsView: React.FC<EventsViewProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
